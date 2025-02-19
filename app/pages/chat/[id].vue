@@ -8,7 +8,8 @@ const router = useRouter();
 const chatStore = useChatStore();
 const chatId = route.params.id as string;
 
-// If chat doesn't exist, redirect to home
+// Initialize store and check if chat exists
+chatStore.init();
 if (!chatStore.getChat(chatId)) {
   router.push("/");
 }

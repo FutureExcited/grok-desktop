@@ -100,7 +100,10 @@ const focusInput = (event) => {
 
 <template>
   <div
-    :class="['w-full mx-auto', chatMode ? 'max-w-[800px]' : 'max-w-[900px]']"
+    :class="[
+      'w-full bg-transparent mx-auto',
+      chatMode ? 'max-w-[800px]' : 'max-w-[900px]',
+    ]"
   >
     <div
       @click="focusInput"

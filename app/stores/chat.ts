@@ -1,10 +1,14 @@
 import { defineStore } from "pinia";
-import { ref, computed } from "vue";
+import { ref, reactive } from "vue";
+import { useFeaturesStore } from "./features";
+import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 
 export interface Message {
   content: string;
   isUser: boolean;
   timestamp: number;
+  isStreaming?: boolean;
 }
 
 export interface ChatState {
@@ -12,73 +16,194 @@ export interface ChatState {
   message: string;
 }
 
+export interface ChatsState {
+  [key: string]: ChatState;
+}
+
+export interface StreamChunk {
+  role?: string;
+  content?: string;
+  finish_reason?: string;
+  done?: boolean;
+  error?: string;
+  stack?: string;
+}
+
+export interface StreamResponse {
+  content?: string;
+  error?: string;
+  done: boolean;
+}
+
 export const useChatStore = defineStore(
   "chat",
   () => {
-    const chats = ref<Map<string, ChatState>>(new Map());
+    const chats = ref<ChatsState>({});
+    const featuresStore = useFeaturesStore();
+    let updateTimeout: NodeJS.Timeout | null = null;
+    const DEBOUNCE_TIME = 50; // 50ms debounce for smooth updates
+
+    const init = () => {
+      if (typeof chats.value !== "object" || Array.isArray(chats.value)) {
+        chats.value = {};
+      }
+    };
+
+    init();
 
     const initChat = (chatId: string, initialMessage?: string) => {
-      if (!chats.value.has(chatId)) {
-        chats.value.set(chatId, {
-          messages: initialMessage
-            ? [
-                {
-                  content: initialMessage,
-                  isUser: true,
-                  timestamp: Date.now(),
-                },
-                {
-                  content: placeholder,
-                  isUser: false,
-                  timestamp: Date.now() + 1,
-                },
-              ]
-            : [],
+      if (!chats.value[chatId]) {
+        chats.value[chatId] = reactive({
+          messages: [],
           message: "",
         });
+
+        if (initialMessage) {
+          sendMessage(chatId, initialMessage);
+        }
       }
-      return chats.value.get(chatId)!;
+      return chats.value[chatId];
     };
 
     const getChat = (chatId: string) => {
-      return chats.value.get(chatId);
+      return chats.value[chatId];
     };
 
-    const sendMessage = (chatId: string, content: string) => {
-      const chat = chats.value.get(chatId);
-      if (!chat || !content.trim()) return;
+    const updateMessageContent = (message: Message, content: string) => {
+      if (message.isStreaming) {
+        // Remove debouncing to ensure immediate updates
+        message.content = content;
+      }
+    };
 
-      chat.messages.push({
-        content,
-        isUser: true,
-        timestamp: Date.now(),
-      });
+    const setMessageStreaming = (message: Message, isStreaming: boolean) => {
+      message.isStreaming = isStreaming;
+      // Force a UI update when streaming ends
+      if (!isStreaming) {
+        message.timestamp = Date.now();
+      }
+    };
 
-      // Add bot response
-      chat.messages.push({
-        content: placeholder,
-        isUser: false,
-        timestamp: Date.now() + 1,
-      });
+    const sendMessage = async (chatId: string, content?: string) => {
+      const chat = chats.value[chatId];
+      if (!chat) {
+        console.error("[CHAT] Chat not found:", chatId);
+        return;
+      }
 
-      chat.message = "";
+      const messageContent = content || chat.message;
+      if (!messageContent?.trim()) {
+        console.error("[CHAT] No message content to send");
+        return;
+      }
+
+      try {
+        console.log("[CHAT] Sending message:", messageContent);
+
+        // Add user message
+        const userMessage = reactive<Message>({
+          content: messageContent,
+          isUser: true,
+          timestamp: Date.now(),
+        });
+        chat.messages.push(userMessage);
+
+        // Clear the input immediately after sending
+        chat.message = "";
+
+        // Prepare context information
+        const contextInfo = {
+          webSearch: featuresStore.searchEnabled,
+          deepSearch: featuresStore.deepSearchEnabled,
+          think: featuresStore.thinkEnabled,
+          attachedFiles: featuresStore.attachedFiles.map((file) => ({
+            name: file.name,
+            type: file.type,
+            size: file.size,
+          })),
+        };
+
+        console.log("[CHAT] Prepared context info:", contextInfo);
+
+        // Add assistant message that will be streamed
+        const assistantMessage = reactive<Message>({
+          content: "",
+          isUser: false,
+          timestamp: Date.now(),
+          isStreaming: true,
+        });
+        chat.messages.push(assistantMessage);
+
+        console.log("[CHAT] Making API request");
+
+        // Call the Rust command
+        await invoke("chat", {
+          messages: chat.messages
+            .filter((msg) => !msg.isStreaming)
+            .map((msg) => ({
+              role: msg.isUser ? "user" : "assistant",
+              content: msg.content,
+            })),
+        });
+
+        // Listen for stream events
+        const unlisten = await listen<StreamResponse>(
+          "chat_stream",
+          (event) => {
+            if (event.payload.error) {
+              throw new Error(event.payload.error);
+            }
+
+            if (event.payload.content) {
+              updateMessageContent(
+                assistantMessage,
+                assistantMessage.content + event.payload.content
+              );
+            }
+
+            if (event.payload.done) {
+              setMessageStreaming(assistantMessage, false);
+              unlisten();
+            }
+          }
+        );
+      } catch (error) {
+        if (updateTimeout) {
+          clearTimeout(updateTimeout);
+          updateTimeout = null;
+        }
+        console.error("[CHAT] Error in chat completion:", error);
+        const lastMessage = chat.messages[chat.messages.length - 1];
+        if (lastMessage && !lastMessage.isUser) {
+          updateMessageContent(
+            lastMessage,
+            "I apologize, but I encountered an error while processing your request. Please try again."
+          );
+          setMessageStreaming(lastMessage, false);
+        }
+      }
     };
 
     const editMessage = (chatId: string, content: string) => {
-      const chat = chats.value.get(chatId);
+      const chat = chats.value[chatId];
       if (!chat) return;
       chat.message = content;
     };
 
-    const regenerateMessage = (chatId: string) => {
-      const chat = chats.value.get(chatId);
+    const regenerateMessage = async (chatId: string) => {
+      const chat = chats.value[chatId];
       if (!chat) return;
 
-      chat.messages.push({
-        content: placeholder,
-        isUser: false,
-        timestamp: Date.now(),
-      });
+      const lastUserMessageIndex = [...chat.messages]
+        .reverse()
+        .findIndex((msg) => msg.isUser);
+      if (lastUserMessageIndex === -1) return;
+
+      const lastUserMessage =
+        chat.messages[chat.messages.length - 1 - lastUserMessageIndex];
+      if (lastUserMessage) {
+        await sendMessage(chatId, lastUserMessage.content);
+      }
     };
 
     const likeMessage = (chatId: string) => {
@@ -91,6 +216,7 @@ export const useChatStore = defineStore(
 
     return {
       chats,
+      init,
       initChat,
       getChat,
       sendMessage,
@@ -101,10 +227,8 @@ export const useChatStore = defineStore(
     };
   },
   {
-    persist: true,
+    persist: {
+      storage: import.meta.client ? localStorage : undefined,
+    },
   }
 );
-
-const placeholder = `I'd love to help you brainstorm ideas! What specific topic or challenge would you like to explore together? I can help with coding, writing, analysis, or any other creative endeavor you have in mind.
-
-I'm equipped with extensive knowledge across many fields and can approach problems from multiple angles. Let's dive in and find the best solution for your needs!`;

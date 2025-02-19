@@ -2,14 +2,35 @@
 export default defineNuxtConfig({
   compatibilityDate: "2024-11-13",
   devtools: { enabled: true },
-  modules: ["@nuxtjs/tailwindcss", "@nuxt/fonts", "@pinia/nuxt"],
+  modules: [
+    "@nuxtjs/tailwindcss",
+    "@nuxt/fonts",
+    "@pinia/nuxt",
+    "@pinia-plugin-persistedstate/nuxt",
+  ],
   future: {
     compatibilityVersion: 4,
   },
-  ssr: true,
+  ssr: false,
   pages: true,
-  experimental: {
-    // This will prevent the middleware warning
-    watcher: "parcel",
+  vite: {
+    clearScreen: false,
+    envPrefix: ["VITE_", "TAURI_"],
+    server: {
+      strictPort: true,
+      hmr: {
+        protocol: "ws",
+        host: "0.0.0.0",
+        port: 3001,
+      },
+      watch: {
+        ignored: ["**/src-tauri/**"],
+      },
+    },
   },
+  devServer: {
+    host: "0.0.0.0",
+  },
+
+  runtimeConfig: {},
 });

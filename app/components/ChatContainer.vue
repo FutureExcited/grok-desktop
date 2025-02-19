@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref, watch, nextTick, onMounted, onUnmounted } from "vue";
 import { useChatStore } from "~/stores/chat";
+import { ArrowDown } from "lucide-vue-next";
 import Message from "./Message.vue";
 import ChatInput from "./ChatInput.vue";
 
@@ -9,13 +10,25 @@ const props = defineProps<{
 }>();
 
 const chatStore = useChatStore();
-const chat = computed(() => chatStore.getChat(props.chatId)!);
+const showScrollButton = ref(false);
+let scrollTimeout: NodeJS.Timeout | null = null;
 
-const handleSend = (content: string) => {
-  chatStore.sendMessage(props.chatId, content);
+const chat = computed(() => {
+  const currentChat = chatStore.getChat(props.chatId);
+  if (!currentChat) {
+    chatStore.initChat(props.chatId);
+    return chatStore.getChat(props.chatId);
+  }
+  return currentChat;
+});
+
+const handleSend = () => {
+  if (!chat.value?.message?.trim()) return;
+  chatStore.sendMessage(props.chatId);
 };
 
 const handleEdit = (content: string) => {
+  if (!chat.value) return;
   chatStore.editMessage(props.chatId, content);
 };
 
@@ -30,17 +43,72 @@ const handleLike = () => {
 const handleDislike = () => {
   chatStore.dislikeMessage(props.chatId);
 };
+
+// Optimized scroll handling with debounce
+const scrollToBottom = () => {
+  if (scrollTimeout) {
+    clearTimeout(scrollTimeout);
+  }
+
+  scrollTimeout = setTimeout(async () => {
+    await nextTick();
+    window.scrollTo({
+      top: document.documentElement.scrollHeight,
+      behavior: "smooth",
+    });
+    scrollTimeout = null;
+  }, 32); // ~2 frames at 60fps
+};
+
+// Check if we're near bottom
+const isNearBottom = () => {
+  const threshold = 100; // pixels from bottom
+  return (
+    window.innerHeight + window.scrollY >=
+    document.documentElement.scrollHeight - threshold
+  );
+};
+
+// Scroll position handler
+const handleScroll = () => {
+  showScrollButton.value = !isNearBottom();
+};
+
+// Watch for changes and scroll
+watch(
+  () => chat.value?.messages,
+  () => {
+    if (isNearBottom()) {
+      scrollToBottom();
+    }
+  },
+  { deep: true }
+);
+
+// Lifecycle hooks
+onMounted(() => {
+  window.addEventListener("scroll", handleScroll);
+  scrollToBottom();
+});
+
+onUnmounted(() => {
+  window.removeEventListener("scroll", handleScroll);
+  if (scrollTimeout) {
+    clearTimeout(scrollTimeout);
+  }
+});
 </script>
 
 <template>
-  <div class="flex flex-col min-h-screen">
+  <div class="flex flex-col min-h-screen pb-32">
     <!-- Chat content -->
-    <div class="flex-1 w-full overflow-auto pb-32">
+    <div class="flex-1 w-full" style="contain: content">
       <Message
-        v-for="msg in chat.messages"
+        v-for="msg in chat?.messages || []"
         :key="msg.timestamp"
         :content="msg.content"
         :is-user="msg.isUser"
+        :is-streaming="msg.isStreaming"
         @edit="handleEdit"
         @regenerate="handleRegenerate"
         @like="handleLike"
@@ -48,10 +116,36 @@ const handleDislike = () => {
       />
     </div>
 
+    <!-- Go down button -->
+    <Transition
+      enter-active-class="transition duration-200 ease-out"
+      enter-from-class="opacity-0 translate-y-4"
+      enter-to-class="opacity-100 translate-y-0"
+      leave-active-class="transition duration-200 ease-out"
+      leave-from-class="opacity-100 translate-y-0"
+      leave-to-class="opacity-0 translate-y-4"
+    >
+      <button
+        v-show="showScrollButton"
+        @click="scrollToBottom"
+        class="fixed bottom-32 p-2.5 bg-[#333537]/90 hover:bg-[#3A3C3E] text-[#8E8E8E] hover:text-white rounded-full shadow-lg backdrop-blur-sm transition-all duration-200 will-change-transform group"
+        style="
+          backface-visibility: hidden;
+          right: calc((100vw - 50rem) / 2 + 2rem);
+        "
+      >
+        <ArrowDown class="w-4 h-4 transition-colors duration-200" />
+      </button>
+    </Transition>
+
     <!-- Fixed chat input at bottom -->
-    <div class="fixed bottom-4 left-0 right-0 py-2">
+    <div
+      class="fixed bottom-4 left-0 right-0 py-2 bg-transparent will-change-transform"
+      style="transform: translateZ(0); backface-visibility: hidden"
+    >
       <div class="w-[50rem] mx-auto px-4">
         <ChatInput
+          v-if="chat"
           v-model:message="chat.message"
           @send="handleSend"
           :chatMode="true"
@@ -64,7 +158,8 @@ const handleDislike = () => {
 <style scoped>
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.3s ease;
+  transition: opacity 0.2s ease-out;
+  will-change: opacity;
 }
 
 .fade-enter-from,
@@ -75,17 +170,18 @@ const handleDislike = () => {
 .slide-up-enter-active,
 .slide-up-leave-active {
   transition:
-    transform 0.3s ease,
-    opacity 0.3s ease;
+    transform 0.2s ease-out,
+    opacity 0.2s ease-out;
+  will-change: transform, opacity;
 }
 
 .slide-up-enter-from {
-  transform: translateY(100%);
+  transform: translateY(100%) translateZ(0);
   opacity: 0;
 }
 
 .slide-up-leave-to {
-  transform: translateY(100%);
+  transform: translateY(100%) translateZ(0);
   opacity: 0;
 }
 </style>
