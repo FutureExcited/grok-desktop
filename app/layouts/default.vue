@@ -4,7 +4,9 @@
   >
     <Header />
     <main class="flex-grow flex flex-col">
-      <slot />
+      <div class="max-w-[700px] mx-auto px-4 w-full flex-1">
+        <slot />
+      </div>
     </main>
   </div>
 </template>

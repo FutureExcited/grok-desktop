@@ -65,9 +65,9 @@ const handleFileChange = (event) => {
 </script>
 
 <template>
-  <div class="w-full mx-auto space-y-3">
+  <div class="w-full space-y-3">
     <div
-      class="bg-[#333537] rounded-[12px] flex flex-col gap-1.5 px-3.5 py-3 relative transition-colors duration-200"
+      class="bg-[#333537] rounded-[12px] flex flex-col gap-2 px-3.5 py-3 relative transition-colors duration-200"
     >
       <div class="flex items-center gap-2">
         <button
@@ -88,7 +88,7 @@ const handleFileChange = (event) => {
           @input="emit('update:message', $event.target.value)"
           type="text"
           :placeholder="currentPlaceholder"
-          class="bg-transparent text-[15px] text-gray-200 w-full focus:outline-none placeholder:text-[#6B7280] leading-normal"
+          class="bg-transparent text-[14px] text-gray-200 w-full focus:outline-none placeholder:text-[#6B7280] leading-normal"
           @keyup.enter="emit('send')"
         />
       </div>
@@ -114,11 +114,11 @@ const handleFileChange = (event) => {
           <div class="relative">
             <button
               @click="showModelSelector = !showModelSelector"
-              class="flex items-center gap-1.5 text-[#8E8E8E] hover:text-white transition-all duration-200 text-sm px-2 py-1.5 rounded-lg hover:bg-[#404040]"
+              class="flex items-center gap-1.5 text-[#8E8E8E] hover:text-white transition-all duration-200 text-xs px-2 py-1 rounded-lg hover:bg-[#404040]"
             >
               <span>{{ selectedModel }}</span>
               <ChevronDown
-                class="w-4 h-4 transition-transform duration-200"
+                class="w-3.5 h-3.5 transition-transform duration-200"
                 :class="{ 'rotate-180': showModelSelector }"
               />
             </button>
@@ -134,7 +134,7 @@ const handleFileChange = (event) => {
                   selectedModel = model;
                   showModelSelector = false;
                 "
-                class="w-full px-3 py-1.5 text-left text-sm text-[#E5E5E5] hover:bg-[#404040] transition-colors duration-200"
+                class="w-full px-3 py-1.5 text-left text-xs text-[#E5E5E5] hover:bg-[#404040] transition-colors duration-200"
               >
                 {{ model }}
               </button>
@@ -142,9 +142,9 @@ const handleFileChange = (event) => {
           </div>
           <button
             @click="emit('send')"
-            class="hover:bg-[#404040] p-1.5 rounded-lg transition-all duration-200 hover:scale-105"
+            class="hover:bg-[#404040] p-1 rounded-lg transition-all duration-200 hover:scale-105"
           >
-            <Send class="w-[19px] h-[19px] text-white" />
+            <Send class="w-4 h-4 text-white" />
           </button>
         </div>
       </div>

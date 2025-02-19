@@ -4,19 +4,44 @@ import Message from "./Message.vue";
 import ChatInput from "./ChatInput.vue";
 import SuggestedActions from "./SuggestedActions.vue";
 
-const { message, messages, hasStartedChat, showInitialContent, sendMessage } =
-  useChat();
+const {
+  message,
+  messages,
+  hasStartedChat,
+  showInitialContent,
+  sendMessage,
+  editMessage,
+  regenerateMessage,
+  likeMessage,
+  dislikeMessage,
+} = useChat();
+
+const handleEdit = (content: string) => {
+  editMessage(content);
+};
+
+const handleRegenerate = () => {
+  regenerateMessage();
+};
+
+const handleLike = () => {
+  likeMessage();
+};
+
+const handleDislike = () => {
+  dislikeMessage();
+};
 </script>
 
 <template>
-  <div class="flex flex-col min-h-screen max-w-[800px] mx-auto">
+  <div class="flex flex-col min-h-screen">
     <!-- Initial content -->
     <Transition name="fade">
       <div
         v-if="showInitialContent"
         class="flex-1 flex flex-col items-center justify-center -mt-32"
       >
-        <div class="text-center max-w-3xl w-full space-y-1 mb-8 px-4">
+        <div class="text-center w-full space-y-1 mb-8">
           <h1
             class="text-xl leading-tight font-medium text-[#F9F8F6] tracking-[-0.01em] animate-fade-in"
           >
@@ -28,8 +53,8 @@ const { message, messages, hasStartedChat, showInitialContent, sendMessage } =
             How can I help you today?
           </h2>
         </div>
-        <div class="w-full px-4">
-          <div class="mx-auto space-y-6 animate-fade-in animation-delay-200">
+        <div class="w-full">
+          <div class="space-y-6 animate-fade-in animation-delay-200">
             <ChatInput v-model:message="message" @send="sendMessage" />
             <SuggestedActions />
           </div>
@@ -45,17 +70,18 @@ const { message, messages, hasStartedChat, showInitialContent, sendMessage } =
           :key="index"
           :content="msg.content"
           :is-user="msg.isUser"
+          @edit="handleEdit"
+          @regenerate="handleRegenerate"
+          @like="handleLike"
+          @dislike="handleDislike"
         />
       </div>
     </Transition>
 
     <!-- Fixed chat input at bottom when chat has started -->
     <Transition name="slide-up">
-      <div
-        v-if="hasStartedChat"
-        class="fixed bottom-0 left-0 right-0 bg-[#141414] py-4"
-      >
-        <div class="max-w-[800px] mx-auto px-4">
+      <div v-if="hasStartedChat" class="fixed bottom-0 left-0 right-0 py-2">
+        <div class="max-w-[700px] mx-auto px-4">
           <ChatInput v-model:message="message" @send="sendMessage" />
         </div>
       </div>

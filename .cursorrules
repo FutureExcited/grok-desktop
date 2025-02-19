@@ -1,3 +1,6 @@
 Always analyze what you've been tasked with first using CoT technique.
 
+For design, you design everything with fully rounded corners. Also on hover, the background 
+color should change transparency.
+
 Write it down. And then solve the problem. For commands, use bun

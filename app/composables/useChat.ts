@@ -32,12 +32,36 @@ export const useChat = () => {
     hasStartedChat.value = true;
   };
 
+  const editMessage = (content: string) => {
+    message.value = content;
+  };
+
+  const regenerateMessage = () => {
+    // For now, just add the same response again
+    messages.value.push({
+      content: placeholder,
+      isUser: false,
+    });
+  };
+
+  const likeMessage = () => {
+    console.log("Message liked");
+  };
+
+  const dislikeMessage = () => {
+    console.log("Message disliked");
+  };
+
   return {
     message,
     messages,
     hasStartedChat,
     showInitialContent,
     sendMessage,
+    editMessage,
+    regenerateMessage,
+    likeMessage,
+    dislikeMessage,
   };
 };
 
