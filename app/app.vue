@@ -5,12 +5,15 @@
 </template>
 
 <style>
-body {
-  margin: 0;
-  padding: 0;
-  background: #141414;
+* {
   font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Helvetica,
+    Arial,
     sans-serif;
 }
 

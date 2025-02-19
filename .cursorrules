@@ -1,6 +1,9 @@
 Always analyze what you've been tasked with first using CoT technique.
 
-For design, you design everything with fully rounded corners. Also on hover, the background 
-color should change transparency.
+For design, you design everything with FULLY (!) rounded corners. Also on hover, the background 
+color should change transparency. Each single animation must be fast, smooth and satisfying.
 
-Write it down. And then solve the problem. For commands, use bun
+Write it down. And then solve the problem. For commands, use bun.
+
+Finally, for each single component you write, polish the design of it extremely, 
+make it look fully production ready, and ONCE AGAIN POLISH IT FULLY.

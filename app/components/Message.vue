@@ -184,7 +184,7 @@ const dislikeMessage = () => {
 }
 
 :deep(strong) {
-  font-weight: 500;
+  font-weight: 550;
 }
 
 .user-message :deep(p) {

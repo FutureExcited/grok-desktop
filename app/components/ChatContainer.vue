@@ -1,119 +1,67 @@
 <script setup lang="ts">
-import { useChat } from "~/composables/useChat";
+import { computed } from "vue";
+import { useChatStore } from "~/stores/chat";
 import Message from "./Message.vue";
 import ChatInput from "./ChatInput.vue";
-import SuggestedActions from "./SuggestedActions.vue";
 
-const {
-  message,
-  messages,
-  hasStartedChat,
-  showInitialContent,
-  sendMessage,
-  editMessage,
-  regenerateMessage,
-  likeMessage,
-  dislikeMessage,
-} = useChat();
+const props = defineProps<{
+  chatId: string;
+}>();
+
+const chatStore = useChatStore();
+const chat = computed(() => chatStore.getChat(props.chatId)!);
+
+const handleSend = (content: string) => {
+  chatStore.sendMessage(props.chatId, content);
+};
 
 const handleEdit = (content: string) => {
-  editMessage(content);
+  chatStore.editMessage(props.chatId, content);
 };
 
 const handleRegenerate = () => {
-  regenerateMessage();
+  chatStore.regenerateMessage(props.chatId);
 };
 
 const handleLike = () => {
-  likeMessage();
+  chatStore.likeMessage(props.chatId);
 };
 
 const handleDislike = () => {
-  dislikeMessage();
+  chatStore.dislikeMessage(props.chatId);
 };
 </script>
 
 <template>
   <div class="flex flex-col min-h-screen">
-    <!-- Initial content -->
-    <Transition name="fade">
-      <div
-        v-if="showInitialContent"
-        class="flex-1 flex flex-col items-center justify-center -mt-32"
-      >
-        <div class="text-center w-full space-y-1 mb-8">
-          <h1
-            class="text-xl leading-tight font-medium text-[#F9F8F6] tracking-[-0.01em] animate-fade-in"
-          >
-            Good afternoon, murzin.
-          </h1>
-          <h2
-            class="text-xl leading-tight font-medium text-[#8E8E8E] tracking-[-0.01em] animate-fade-in animation-delay-100"
-          >
-            How can I help you today?
-          </h2>
-        </div>
-        <div class="w-full">
-          <div class="space-y-6 animate-fade-in animation-delay-200">
-            <ChatInput v-model:message="message" @send="sendMessage" />
-            <SuggestedActions />
-          </div>
-        </div>
-      </div>
-    </Transition>
-
     <!-- Chat content -->
-    <Transition name="fade">
-      <div v-if="messages.length > 0" class="flex-1 w-full overflow-auto pb-32">
-        <Message
-          v-for="(msg, index) in messages"
-          :key="index"
-          :content="msg.content"
-          :is-user="msg.isUser"
-          @edit="handleEdit"
-          @regenerate="handleRegenerate"
-          @like="handleLike"
-          @dislike="handleDislike"
+    <div class="flex-1 w-full overflow-auto pb-32">
+      <Message
+        v-for="msg in chat.messages"
+        :key="msg.timestamp"
+        :content="msg.content"
+        :is-user="msg.isUser"
+        @edit="handleEdit"
+        @regenerate="handleRegenerate"
+        @like="handleLike"
+        @dislike="handleDislike"
+      />
+    </div>
+
+    <!-- Fixed chat input at bottom -->
+    <div class="fixed bottom-4 left-0 right-0 py-2">
+      <div class="w-[50rem] mx-auto px-4">
+        <ChatInput
+          v-model:message="chat.message"
+          @send="handleSend"
+          :chatMode="true"
         />
       </div>
-    </Transition>
-
-    <!-- Fixed chat input at bottom when chat has started -->
-    <Transition name="slide-up">
-      <div v-if="hasStartedChat" class="fixed bottom-0 left-0 right-0 py-2">
-        <div class="max-w-[700px] mx-auto px-4">
-          <ChatInput v-model:message="message" @send="sendMessage" />
-        </div>
-      </div>
-    </Transition>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.animate-fade-in {
-  animation: fadeIn 0.5s ease-out forwards;
-  opacity: 0;
-}
-
-.animation-delay-100 {
-  animation-delay: 100ms;
-}
-
-.animation-delay-200 {
-  animation-delay: 200ms;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.3s ease;
