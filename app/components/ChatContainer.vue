@@ -4,6 +4,7 @@ import { useChatStore } from "~/stores/chat";
 import { ArrowDown } from "lucide-vue-next";
 import Message from "./Message.vue";
 import ChatInput from "./ChatInput.vue";
+import { useFeaturesStore } from "~~/app/stores/features";
 
 const props = defineProps<{
   chatId: string;
@@ -12,6 +13,7 @@ const props = defineProps<{
 const chatStore = useChatStore();
 const showScrollButton = ref(false);
 let scrollTimeout: NodeJS.Timeout | null = null;
+const featuresStore = useFeaturesStore();
 
 const chat = computed(() => {
   const currentChat = chatStore.getChat(props.chatId);
@@ -19,12 +21,15 @@ const chat = computed(() => {
     chatStore.initChat(props.chatId);
     return chatStore.getChat(props.chatId);
   }
+  console.log("[CHAT_CONTAINER] Current chat messages:", currentChat.messages);
   return currentChat;
 });
 
 const handleSend = () => {
   if (!chat.value?.message?.trim()) return;
   chatStore.sendMessage(props.chatId);
+  // Clear attached files after sending the message
+  featuresStore.clearFiles();
 };
 
 const handleEdit = (content: string) => {
@@ -109,6 +114,7 @@ onUnmounted(() => {
         :content="msg.content"
         :is-user="msg.isUser"
         :is-streaming="msg.isStreaming"
+        :attached-files="msg.attachedFiles || []"
         @edit="handleEdit"
         @regenerate="handleRegenerate"
         @like="handleLike"

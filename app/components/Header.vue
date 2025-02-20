@@ -1,9 +1,18 @@
 <script setup>
 import { User, Settings, HelpCircle, History, Ghost } from "lucide-vue-next";
+import { useHistoryStore } from "~~/app/stores/history";
+import HistoryModal from "~~/app/components/HistoryModal.vue";
+import ProfileModal from "~~/app/components/ProfileModal.vue";
+import { ref } from "vue";
+
+const historyStore = useHistoryStore();
+const profileModalRef = ref(null);
 </script>
 
 <template>
   <header class="w-full">
+    <HistoryModal />
+    <ProfileModal ref="profileModalRef" />
     <div class="container-fluid px-6">
       <div class="flex justify-between items-center h-[60px]">
         <div class="flex items-center gap-2">
@@ -37,28 +46,50 @@ import { User, Settings, HelpCircle, History, Ghost } from "lucide-vue-next";
         <div class="flex items-center gap-4">
           <div class="relative group">
             <button
-              class="hover:bg-[#2A2A2A] p-2 rounded-lg transition-colors duration-200 text-[#E5E5E5]"
+              class="hover:bg-[#2A2A2A]/90 size-10 rounded-full transition-all duration-200 text-[#E5E5E5] hover:scale-105 active:scale-95 flex items-center justify-center"
             >
               <Ghost class="w-5 h-5" />
             </button>
             <div
-              class="absolute bottom-full mb-2 right-0 w-64 p-2 bg-[#2A2A2A] rounded-lg text-sm text-[#E5E5E5] opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none"
+              class="absolute top-full mt-3 right-0 w-44 p-2.5 bg-[#2A2A2A] rounded-2xl text-sm text-[#E5E5E5] opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-lg shadow-black/20 backdrop-blur-sm border border-white/5 transform group-hover:translate-y-0 translate-y-1 z-50"
             >
-              Start a temporary chat that won't be saved to your history
+              <span
+                class="font-medium whitespace-nowrap overflow-hidden text-ellipsis block"
+                >Switch to Temporary Chat</span
+              >
+              <div
+                class="absolute -top-1.5 right-5 w-3 h-3 bg-[#2A2A2A] rotate-45 border-l border-t border-white/5"
+              ></div>
+            </div>
+          </div>
+          <div class="relative group">
+            <button
+              class="hover:bg-[#2A2A2A]/90 size-10 rounded-full transition-all duration-200 hover:scale-105 active:scale-95 flex items-center justify-center"
+              @click="historyStore.toggleModal"
+            >
+              <History class="w-5 h-5 text-[#E5E5E5]" />
+            </button>
+            <div
+              class="absolute top-full mt-3 right-0 w-20 p-2.5 bg-[#2A2A2A] rounded-2xl text-sm text-[#E5E5E5] opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none shadow-lg shadow-black/20 backdrop-blur-sm border border-white/5 transform group-hover:translate-y-0 translate-y-1 z-50"
+            >
+              <span
+                class="font-medium whitespace-nowrap overflow-hidden text-ellipsis block"
+                >History</span
+              >
+              <div
+                class="absolute -top-1.5 right-5 w-3 h-3 bg-[#2A2A2A] rotate-45 border-l border-t border-white/5"
+              ></div>
             </div>
           </div>
           <button
-            class="hover:bg-[#2A2A2A] p-2 rounded-lg transition-colors duration-200"
-          >
-            <History class="w-5 h-5 text-[#E5E5E5]" />
-          </button>
-          <button
-            class="hover:bg-[#2A2A2A] p-2 rounded-lg transition-colors duration-200"
+            class="hover:bg-[#2A2A2A]/90 rounded-full transition-all duration-200 hover:scale-105 active:scale-95 size-10 flex items-center justify-center overflow-hidden"
+            @click="profileModalRef?.toggleModal()"
+            data-profile-trigger
           >
             <img
               src="/avatar.webp"
               alt="Profile"
-              class="w-6 h-6 rounded-full object-cover"
+              class="w-full h-full rounded-full object-cover"
             />
           </button>
         </div>

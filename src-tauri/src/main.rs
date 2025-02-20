@@ -21,6 +21,38 @@ struct Message {
     content: String,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+struct TextFile {
+    name: String,
+    #[serde(rename = "type")]
+    type_: String,
+    size: u64,
+    content: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct ImageFile {
+    name: String,
+    #[serde(rename = "type")]
+    type_: String,
+    size: u64,
+    #[serde(rename = "base64Content")]
+    base64_content: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct ContextInfo {
+    #[serde(rename = "webSearch")]
+    web_search: bool,
+    #[serde(rename = "deepSearch")]
+    deep_search: bool,
+    think: bool,
+    #[serde(rename = "textFiles")]
+    text_files: Option<Vec<TextFile>>,
+    #[serde(rename = "imageFiles")]
+    image_files: Option<Vec<ImageFile>>,
+}
+
 #[derive(Debug, Serialize, Clone)]
 struct StreamResponse {
     content: Option<String>,
@@ -29,7 +61,11 @@ struct StreamResponse {
 }
 
 #[tauri::command]
-async fn chat(messages: Vec<Message>, app_handle: tauri::AppHandle) -> Result<(), String> {
+async fn chat(
+    messages: Vec<Message>,
+    context_info: ContextInfo,
+    app_handle: tauri::AppHandle,
+) -> Result<(), String> {
     let client = reqwest::Client::new();
 
     // Spawn the streaming task
@@ -37,7 +73,8 @@ async fn chat(messages: Vec<Message>, app_handle: tauri::AppHandle) -> Result<()
         let res = client
             .post("https://ai-gateaway-production.up.railway.app/api/chat")
             .json(&json!({
-                "messages": messages
+                "messages": messages,
+                "context": context_info
             }))
             .header("Content-Type", "application/json")
             .header("Accept", "text/event-stream")

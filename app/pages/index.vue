@@ -2,11 +2,13 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { useChatStore } from "~/stores/chat";
+import { useFeaturesStore } from "~/stores/features";
 import ChatInput from "~/components/ChatInput.vue";
 import SuggestedActions from "~/components/SuggestedActions.vue";
 
 const router = useRouter();
 const chatStore = useChatStore();
+const featuresStore = useFeaturesStore();
 const message = ref("");
 
 const handleSend = () => {
@@ -17,6 +19,9 @@ const handleSend = () => {
 
   // Initialize chat with the first message
   chatStore.initChat(uuid, message.value);
+
+  // Clear attached files after initializing chat
+  featuresStore.clearFiles();
 
   // Navigate to chat
   router.push(`/chat/${uuid}`);

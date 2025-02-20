@@ -9,6 +9,7 @@ export interface Message {
   isUser: boolean;
   timestamp: number;
   isStreaming?: boolean;
+  attachedFiles?: FileInfo[];
 }
 
 export interface ChatState {
@@ -99,28 +100,50 @@ export const useChatStore = defineStore(
 
       try {
         console.log("[CHAT] Sending message:", messageContent);
+        console.log("[CHAT] Attached files:", featuresStore.attachedFiles);
 
-        // Add user message
+        // Add user message with attached files
         const userMessage = reactive<Message>({
           content: messageContent,
           isUser: true,
           timestamp: Date.now(),
+          attachedFiles:
+            featuresStore.attachedFiles.length > 0
+              ? [...featuresStore.attachedFiles]
+              : undefined,
         });
+
+        console.log("[CHAT] Created message with files:", userMessage);
         chat.messages.push(userMessage);
 
         // Clear the input immediately after sending
         chat.message = "";
 
-        // Prepare context information
+        // Prepare context information and files
+        const textFiles = featuresStore.attachedFiles
+          .filter((file) => !file.isImage)
+          .map((file) => ({
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            content: file.content,
+          }));
+
+        const imageFiles = featuresStore.attachedFiles
+          .filter((file) => file.isImage)
+          .map((file) => ({
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            base64Content: file.base64Content,
+          }));
+
         const contextInfo = {
           webSearch: featuresStore.searchEnabled,
           deepSearch: featuresStore.deepSearchEnabled,
           think: featuresStore.thinkEnabled,
-          attachedFiles: featuresStore.attachedFiles.map((file) => ({
-            name: file.name,
-            type: file.type,
-            size: file.size,
-          })),
+          textFiles,
+          imageFiles,
         };
 
         console.log("[CHAT] Prepared context info:", contextInfo);
@@ -144,6 +167,7 @@ export const useChatStore = defineStore(
               role: msg.isUser ? "user" : "assistant",
               content: msg.content,
             })),
+          contextInfo,
         });
 
         // Listen for stream events

@@ -7,6 +7,8 @@ export interface FileInfo {
   type: string;
   lastModified: number;
   content?: string | ArrayBuffer | null;
+  isImage?: boolean;
+  base64Content?: string;
 }
 
 export const useFeaturesStore = defineStore(
@@ -31,18 +33,28 @@ export const useFeaturesStore = defineStore(
 
     const addFile = (file: File) => {
       const reader = new FileReader();
-
-      reader.onload = () => {
-        attachedFiles.value.push({
-          name: file.name,
-          size: file.size,
-          type: file.type,
-          lastModified: file.lastModified,
-          content: reader.result,
-        });
+      const fileInfo: FileInfo = {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        lastModified: file.lastModified,
+        isImage: file.type.startsWith("image/"),
       };
 
-      reader.readAsText(file);
+      reader.onload = () => {
+        if (fileInfo.isImage) {
+          fileInfo.base64Content = reader.result as string;
+        } else {
+          fileInfo.content = reader.result;
+        }
+        attachedFiles.value.push(fileInfo);
+      };
+
+      if (fileInfo.isImage) {
+        reader.readAsDataURL(file);
+      } else {
+        reader.readAsText(file);
+      }
     };
 
     const removeFile = (fileName: string) => {

@@ -108,8 +108,8 @@ const focusInput = (event) => {
     <div
       @click="focusInput"
       :class="[
-        'input-container bg-[#333537] rounded-[24px] flex flex-col px-5 py-3 relative transition-all duration-200 group focus-within:shadow-glow focus-within:border-white/20 border border-transparent',
-        chatMode ? 'h-[100px]' : 'h-[120px]',
+        'input-container bg-[#333537] rounded-[24px] flex flex-col px-5 py-3 relative transition-all duration-300 ease-in-out group focus-within:shadow-glow focus-within:border-white/20 border border-transparent',
+        chatMode ? 'min-h-[100px]' : 'min-h-[120px]',
       ]"
     >
       <div class="input-wrapper flex items-center min-h-[32px]">
@@ -128,7 +128,11 @@ const focusInput = (event) => {
       <div
         :class="[
           'flex items-center justify-between select-none',
-          chatMode ? 'mt-2' : 'mt-auto',
+          featuresStore.attachedFiles.length > 0
+            ? 'mt-4'
+            : chatMode
+              ? 'mt-2'
+              : 'mt-auto',
         ]"
       >
         <div class="flex items-center gap-2">
