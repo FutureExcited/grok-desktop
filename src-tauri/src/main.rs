@@ -4,13 +4,12 @@
 use futures_util::StreamExt;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use tauri::{Emitter, Manager};
+use tauri::Emitter;
 
 #[derive(Debug, Deserialize)]
 struct StreamChunk {
     content: Option<String>,
     error: Option<String>,
-    stack: Option<String>,
     finish_reason: Option<String>,
     done: Option<bool>,
 }

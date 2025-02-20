@@ -1,75 +1,38 @@
-# Nuxt Minimal Starter
+# Grok Desktop App Demo
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+### Insane performance
 
-## Setup
+- **Way faster than Electron**
+- **Crazy small bundle size**
+- User's CPU will thank you
 
-Make sure to install dependencies:
+### Current Status
 
-```bash
-# npm
-npm install
+Running on external server with Gemini 2.0 flash (for now) - waiting for Grok3 API access
 
-# pnpm
-pnpm install
+- Supports streaming responses, written in Rust
+- Supports images
+- Supports files
+- Ready for an easy database integration
 
-# yarn
-yarn install
+### The Dream
 
-# bun
-bun install
-```
+With that sweet Grok3 API access:
 
-## Development Server
+- Web search
+- Deep research
+- Thinking
+- Image generation
 
-Start the development server on `http://localhost:3000`:
+### Platform Support
 
-```bash
-# npm
-npm run dev
+Linux, Windows - **released**.
 
-# pnpm
-pnpm dev
+**Ready to rock on Mac!** (Just need a MacBook to build it)
 
-# yarn
-yarn dev
+## HIRE ME AND LET'S GET THIS DONE!
 
-# bun
-bun run dev
-```
+---
 
-## Production
-
-Build the application for production:
-
-```bash
-# npm
-npm run build
-
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
-```
-
-Locally preview production build:
-
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+email: flowisgreat@gmail.com
+x: [@flowisgreat](https://x.com/flowisgreat)
